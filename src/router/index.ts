@@ -1,3 +1,6 @@
+import isAuthenticatedGuard from "@/modules/auth/guards/is-authenticated.guard";
+import LoginPage from "@/modules/auth/pages/LoginPage.vue";
+import NotFound404 from "@/modules/common/pages/NotFound404.vue";
 import HomePage from "@/modules/landing/pages/HomePage.vue";
 import { createRouter, createWebHistory } from "vue-router";
 
@@ -5,6 +8,7 @@ import { createRouter, createWebHistory } from "vue-router";
 const router = createRouter({
   history: createWebHistory( import.meta.env.BASE_URL ),
   routes: [
+
     {
       path: '/',
       name: 'landing',
@@ -30,6 +34,21 @@ const router = createRouter({
           name: 'contact',
           component: () => import('@/modules/landing/pages/ContactPage.vue'),
         },
+        {
+          path: '/pokemon/:id',
+          name: 'pokemon',
+          beforeEnter: [isAuthenticatedGuard],
+          props: ( route ) => {
+            const id = Number(route.params.id);
+
+            if( id < 1 ){
+              return {id: 1};
+            }
+
+            return isNaN(id) ? { id: 1 } : { id }
+          },
+          component: () => import('@/modules/pokemons/pages/PokemonPage.vue'),
+        },
       ]
     },
 
@@ -37,7 +56,27 @@ const router = createRouter({
 
     {
       path: '/auth',
-      component: () => import('@/modules/auth/pages/LoginPage.vue')
+      redirect: {name: 'login'},
+      component: () => import('@/modules/auth/layouts/AuthLayout.vue'),
+      children: [
+        {
+          path: 'login',
+          name: 'login',
+          component: LoginPage,
+        },
+        {
+          path: 'register',
+          name: 'register',
+          component: () => import('@/modules/auth/pages/RegisterPage.vue'),
+        },
+      ]
+    },
+
+    // not found
+
+    {
+      path: '/:pathMatch(.*)*',
+      component: NotFound404,
     }
   ]
 })
